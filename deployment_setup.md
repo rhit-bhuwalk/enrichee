@@ -15,132 +15,168 @@ This guide explains how to set up the LinkedIn Research Pipeline for both local 
 
 3. **Configure OAuth Consent Screen:**
    - Go to [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent)
-   - Choose "External" user type (unless you have a Google Workspace)
-   - Fill in required fields (App name, User support email, Developer contact)
-   - Add required scopes:
-     - `https://www.googleapis.com/auth/spreadsheets`
-     - `https://www.googleapis.com/auth/drive.readonly`
-     - `https://www.googleapis.com/auth/gmail.modify`
+   - Choose "External" (unless you have a Google Workspace)
+   - Fill in app name, user support email, and developer contact information
+   - Add the following scopes:
+     ```
+     https://www.googleapis.com/auth/spreadsheets
+     https://www.googleapis.com/auth/drive.readonly
+     https://www.googleapis.com/auth/gmail.modify
+     ```
 
 4. **Create OAuth 2.0 Credentials:**
    - Go to [Credentials](https://console.cloud.google.com/apis/credentials)
    - Click "Create Credentials" → "OAuth 2.0 Client ID"
-   - Choose "Desktop application" as application type
-   - Download the credentials JSON file
+   - Choose "Desktop application"
+   - Download the JSON file (this contains your `client_id`, `client_secret`, etc.)
 
 ## Local Development Setup
 
-1. **Save Credentials File:**
-   - Rename the downloaded file to `credentials.json`
-   - Place it in your project root directory
-   - Add `credentials.json` to your `.gitignore` file
-
-2. **Environment Variables:**
-   Create a `.env` file with your API keys:
-   ```bash
-   PERPLEXITY_API_KEY=your_perplexity_key_here
-   OPENAI_API_KEY=your_openai_key_here
-   ```
-
-3. **Run the App:**
-   ```bash
-   streamlit run streamlit_app.py
-   ```
-
-## Web Deployment Setup (Streamlit Cloud)
-
-### Option 1: Using Streamlit Secrets (Recommended)
-
-1. **Deploy to Streamlit Cloud:**
-   - Push your code to GitHub (excluding `credentials.json`)
-   - Connect your GitHub repo to [Streamlit Cloud](https://share.streamlit.io/)
-
-2. **Configure Secrets:**
-   In your Streamlit Cloud app settings, add the following secrets:
-
-   ```toml
-   # API Keys
-   PERPLEXITY_API_KEY = "your_perplexity_key_here"
-   OPENAI_API_KEY = "your_openai_key_here"
-
-   # Google OAuth Credentials
-   [google_oauth]
-   client_id = "your-client-id.googleusercontent.com"
-   client_secret = "your-client-secret"
-   redirect_uris = ["http://localhost"]
-   auth_uri = "https://accounts.google.com/o/oauth2/auth"
-   token_uri = "https://oauth2.googleapis.com/token"
-   auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
-   ```
-
-   **To get these values from your credentials.json:**
+1. **Save OAuth Credentials:**
+   - Save the downloaded JSON file as `credentials.json` in your project root
+   - The file should look like:
    ```json
    {
      "installed": {
-       "client_id": "copy this value",
-       "client_secret": "copy this value",
-       "redirect_uris": ["http://localhost"],
+       "client_id": "your-client-id",
+       "client_secret": "your-client-secret",
        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
        "token_uri": "https://oauth2.googleapis.com/token",
-       "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs"
+       "redirect_uris": ["http://localhost"]
      }
    }
    ```
 
-### Option 2: Using Environment Variables
+2. **Run the app:**
+   ```bash
+   streamlit run streamlit_app.py
+   ```
 
-Alternatively, you can set these as environment variables in Streamlit Cloud:
+3. **First-time authentication:**
+   - The app will automatically open a browser for Google OAuth
+   - Grant permissions for both Google Sheets and Gmail
+   - Credentials will be saved locally for future use
+
+## Web Deployment (Streamlit Cloud)
+
+### Option 1: Using Streamlit Secrets (Recommended)
+
+1. **Deploy to Streamlit Cloud:**
+   - Connect your GitHub repository to Streamlit Cloud
+   - Deploy the app
+
+2. **Configure Secrets:**
+   - In your Streamlit Cloud app settings, go to "Secrets"
+   - Add the following TOML configuration:
+   ```toml
+   [google_oauth]
+   client_id = "37409654206-p1tkrm5gtsq09mq3ncljnmavfllt9588.apps.googleusercontent.com"
+   client_secret = "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"
+   redirect_uris = ["http://localhost"]
+   auth_uri = "https://accounts.google.com/o/oauth2/auth"
+   token_uri = "https://oauth2.googleapis.com/token"
+   auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
+   project_id = "developiq-456318"
+   ```
+
+3. **Authentication Flow:**
+   - The app will detect it's running in a web environment
+   - It will show an authentication link instead of opening a browser
+   - Click the link, complete Google OAuth, and copy the authorization code
+   - Paste the code back in the app to complete authentication
+
+### Option 2: Environment Variables
+
+Alternatively, you can set environment variables in your deployment platform:
 
 ```bash
-PERPLEXITY_API_KEY=your_key_here
-OPENAI_API_KEY=your_key_here
-GOOGLE_CLIENT_ID=your-client-id.googleusercontent.com
+GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_REDIRECT_URIS=["http://localhost"]
 ```
-
-## Authentication Flow
-
-### Local Development
-- The app will automatically open a browser window for Google OAuth
-- Complete the authentication in your browser
-- Credentials are saved locally in `token.json`
-
-### Web Deployment
-- The app will show a "Click here to authenticate" link
-- Follow the link to complete Google OAuth
-- Copy the authorization code and paste it back in the app
-- Credentials are stored in the browser session
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **"Credentials not found" error:**
-   - Ensure `credentials.json` exists (local) or secrets are configured (web)
-   - Check that OAuth credentials are correctly formatted
+1. **"could not locate runnable browser" error:**
+   - This indicates the app is trying to use local browser authentication in a web environment
+   - Check the "Debug Info" section in the app to see environment detection
+   - Ensure your secrets are properly configured
 
-2. **"API not enabled" error:**
-   - Verify all three APIs are enabled in Google Cloud Console
-   - Wait a few minutes after enabling APIs
+2. **"Authentication failed" in web deployment:**
+   - Verify your OAuth credentials are correctly added to Streamlit secrets
+   - Check that all required APIs are enabled in Google Cloud Console
+   - Ensure OAuth consent screen is properly configured
 
-3. **"Scope not granted" error:**
-   - Check OAuth consent screen configuration
-   - Ensure all required scopes are added
-   - Try re-authentication
+3. **Missing scopes error:**
+   - Make sure all three scopes are added to your OAuth consent screen:
+     - `https://www.googleapis.com/auth/spreadsheets`
+     - `https://www.googleapis.com/auth/drive.readonly`
+     - `https://www.googleapis.com/auth/gmail.modify`
 
-4. **"Access blocked" error:**
-   - Your OAuth consent screen might need verification for production use
-   - For testing, add your Gmail address as a test user in OAuth consent screen
+4. **Environment detection issues:**
+   - Check the debug information in the app's authentication section
+   - The app should detect web deployment automatically
+   - If not, you may need to set a manual environment variable
 
-### Getting Help
+### Testing Your Setup
 
-- Check the `pipeline.log` file for detailed error messages
-- Ensure your Google Cloud project has billing enabled (required for some APIs)
-- Make sure you're using the correct Google account that has access to your spreadsheets
+1. **Local testing:**
+   ```bash
+   python test_setup.py
+   ```
+
+2. **Environment detection testing:**
+   ```bash
+   python test_env_detection.py
+   ```
+
+3. **Google authentication testing:**
+   ```bash
+   python test_gmail_auth.py
+   ```
+
+### Environment Detection Logic
+
+The app detects web deployment using these indicators:
+
+- **Streamlit Cloud:** `STREAMLIT_SHARING_MODE` or `STREAMLIT_CLOUD` environment variables
+- **Heroku:** `DYNO` environment variable
+- **General cloud:** `KUBERNETES_SERVICE_HOST`, `CLOUD_RUN_JOB` environment variables
+- **Secrets presence:** Having `google_oauth` in Streamlit secrets
+- **Display indicators:** Missing `DISPLAY` or `BROWSER` environment variables
+- **File indicators:** Missing `credentials.json` but having secrets
+
+## API Keys Setup
+
+Don't forget to configure your AI service API keys:
+
+**For local development (.env file):**
+```env
+PERPLEXITY_API_KEY=your_perplexity_key
+OPENAI_API_KEY=your_openai_key
+```
+
+**For web deployment (Streamlit secrets):**
+```toml
+PERPLEXITY_API_KEY = "your_perplexity_key"
+OPENAI_API_KEY = "your_openai_key"
+```
 
 ## Security Notes
 
-- Never commit `credentials.json` to version control
-- Use Streamlit secrets for web deployment
-- Regularly rotate your API keys
-- Only grant minimum required permissions 
+- Never commit `credentials.json` or `.env` files to your repository
+- Use Streamlit secrets or environment variables for web deployments
+- Regularly rotate your API keys and OAuth credentials
+- Review OAuth scopes to ensure you only request necessary permissions
+
+## Support
+
+If you encounter issues:
+
+1. Check the app's debug information
+2. Review the logs in your deployment platform
+3. Verify all APIs are enabled in Google Cloud Console
+4. Ensure OAuth consent screen is properly configured
+5. Test the environment detection with the provided scripts 
