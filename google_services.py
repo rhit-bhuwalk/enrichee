@@ -90,7 +90,8 @@ class GoogleSheetsService:
                 st.error("❌ Google OAuth credentials not found.")
                 
                 # Show different instructions based on environment
-                if 'STREAMLIT_SHARING_MODE' in os.environ or 'STREAMLIT_CLOUD' in os.environ:
+                is_web_deployment = self._is_web_deployment()
+                if is_web_deployment:
                     # Web deployment
                     st.info("🌐 **For Streamlit Cloud deployment:**")
                     st.markdown("""
@@ -123,8 +124,10 @@ class GoogleSheetsService:
                 self.config.scopes
             )
             
-            # For web deployment, we need a different approach
-            if 'STREAMLIT_SHARING_MODE' in os.environ or 'STREAMLIT_CLOUD' in os.environ:
+            # Determine if we're in a web deployment environment
+            is_web_deployment = self._is_web_deployment()
+            
+            if is_web_deployment:
                 # Use the authorization URL approach for web deployment
                 auth_url, _ = flow.authorization_url(prompt='consent')
                 
@@ -132,8 +135,8 @@ class GoogleSheetsService:
                 st.markdown(f"**[Click here to authenticate with Google]({auth_url})**")
                 st.info("After authentication, you'll get an authorization code. Paste it below:")
                 
-                auth_code = st.text_input("Authorization Code", type="password")
-                if auth_code and st.button("Complete Authentication"):
+                auth_code = st.text_input("Authorization Code", type="password", key="oauth_auth_code")
+                if auth_code and st.button("Complete Authentication", key="complete_auth_button"):
                     try:
                         flow.fetch_token(code=auth_code)
                         self._credentials = flow.credentials
@@ -162,6 +165,28 @@ class GoogleSheetsService:
         except Exception as e:
             st.error(f"OAuth flow error: {str(e)}")
             return False
+    
+    def _is_web_deployment(self):
+        """Detect if we're running in a web deployment environment."""
+        # Multiple ways to detect web deployment
+        web_indicators = [
+            # Streamlit Cloud specific
+            'STREAMLIT_SHARING_MODE' in os.environ,
+            'STREAMLIT_CLOUD' in os.environ,
+            # Heroku
+            'DYNO' in os.environ,
+            # General cloud indicators
+            'KUBERNETES_SERVICE_HOST' in os.environ,
+            'CLOUD_RUN_JOB' in os.environ,
+            # Check if we have secrets (usually indicates cloud deployment)
+            hasattr(st, 'secrets') and 'google_oauth' in st.secrets,
+            # Check if we're running without a display (common in cloud)
+            os.environ.get('DISPLAY') is None and os.environ.get('BROWSER') is None,
+            # If credentials come from secrets instead of file
+            not os.path.exists("credentials.json") and hasattr(st, 'secrets') and 'google_oauth' in st.secrets
+        ]
+        
+        return any(web_indicators)
     
     def get_service(self):
         """Get Google Sheets service."""

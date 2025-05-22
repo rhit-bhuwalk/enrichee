@@ -93,6 +93,26 @@ class StreamlitApp:
         """Render authentication section."""
         st.subheader("🔐 Google Authentication")
         
+        # Debug information (can be removed later)
+        with st.expander("🔧 Debug Info (for troubleshooting)", expanded=False):
+            import os
+            st.write("**Environment Detection:**")
+            web_indicators = {
+                'STREAMLIT_SHARING_MODE': 'STREAMLIT_SHARING_MODE' in os.environ,
+                'STREAMLIT_CLOUD': 'STREAMLIT_CLOUD' in os.environ,
+                'DYNO (Heroku)': 'DYNO' in os.environ,
+                'Has secrets': hasattr(st, 'secrets') and 'google_oauth' in st.secrets,
+                'No DISPLAY': os.environ.get('DISPLAY') is None,
+                'No BROWSER': os.environ.get('BROWSER') is None,
+                'No credentials.json': not os.path.exists("credentials.json"),
+            }
+            for indicator, detected in web_indicators.items():
+                status = "✅" if detected else "❌"
+                st.write(f"{status} {indicator}: {detected}")
+            
+            is_web = any(web_indicators.values())
+            st.write(f"**Detected as:** {'🌐 Web Deployment' if is_web else '💻 Local Development'}")
+        
         if st.session_state.authenticated:
             # Check both Sheets and Gmail authentication status
             sheets_status = self.sheets_service.authenticate_user()
