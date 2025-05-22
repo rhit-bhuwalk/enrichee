@@ -14,6 +14,7 @@ A modern web interface for automated LinkedIn profile research and personalized 
 - **🛡️ Error Handling**: Robust retry logic and error reporting
 - **📋 Google Sheets Integration**: Direct read/write to your own Google Sheets
 - **💾 Response Archival**: All API responses saved for audit trail
+- **📧 Gmail Integration**: Automatically create email drafts in your Gmail account
 
 ## Quick Start
 
@@ -27,7 +28,7 @@ pip install -r requirements.txt
 
 Follow the detailed instructions in [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md) to:
 1. Create a Google Cloud project
-2. Enable Google Sheets and Drive APIs
+2. Enable Google Sheets, Drive, and Gmail APIs
 3. Create OAuth 2.0 credentials
 4. Download `credentials.json`
 
@@ -45,6 +46,16 @@ OPENAI_API_KEY=your_openai_key_here
 ```bash
 streamlit run streamlit_app.py
 ```
+
+## OAuth Permissions
+
+The application requires the following Google OAuth scopes:
+
+- **Google Sheets**: `https://www.googleapis.com/auth/spreadsheets` - Read and update spreadsheet data
+- **Google Drive**: `https://www.googleapis.com/auth/drive.readonly` - List and access your spreadsheets  
+- **Gmail**: `https://www.googleapis.com/auth/gmail.modify` - Create email drafts in your Gmail account
+
+When you first authenticate, Google will ask you to grant these permissions. The Gmail permission allows the app to create drafts but not send emails or access existing emails.
 
 ## How to Use
 
@@ -75,6 +86,12 @@ Your Google Sheet should have these columns:
 6. **Monitor Progress**: Watch real-time progress, cost tracking, and live results
 7. **View Results**: Results automatically save back to your Google Sheet
 
+### Gmail Drafts Tab
+- After processing completion, switch to Gmail Drafts tab
+- Add optional subject prefix for easy identification
+- Click "Create Gmail Drafts" to automatically create drafts
+- View created drafts and open Gmail to review/send
+
 ## Configuration Options
 
 | Setting | Description | Default |
@@ -99,6 +116,14 @@ The app provides detailed cost tracking:
 - Per-provider breakdown (Perplexity/OpenAI)
 - Call counts and token usage
 - Costs saved to `api_cost_summary.json`
+
+## Gmail Draft Features
+
+- **Automatic Subject Extraction**: Pulls subject lines from generated emails
+- **Subject Prefixes**: Add custom prefixes for easy organization
+- **Batch Creation**: Create multiple drafts efficiently
+- **Error Handling**: Detailed status for each draft creation
+- **Quick Access**: Direct links to Gmail drafts folder
 
 ## File Structure
 
@@ -152,6 +177,11 @@ linkedin_deep_research/
 4. **API Key Issues**:
    - Confirm API keys are correct in `.env` file or sidebar
    - Check API key permissions and quotas
+
+### Gmail Permission Errors
+- Verify Gmail API is enabled in your Google Cloud project
+- Re-authenticate to ensure Gmail scope is granted
+- Check that your Google account has Gmail access
 
 ## Advanced Usage
 

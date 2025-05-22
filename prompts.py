@@ -131,8 +131,38 @@ def get_research_prompt(profile):
     Provide factual, well-researched information only. Clearly distinguish between verified facts and potential inferences. Include sources where available.
     """
 
-def get_email_prompt(profile):
-    """Return the prompt template for generating a personalized cold‐outreach email."""
+def get_default_email_prompt_template():
+    """Return the default email prompt template with placeholders for profile data."""
+    return """ You are a top-tier growth representative writing a cold outreach email from a boutique AI consulting firm made up of three top-tier AI engineers. Our mission: bring the same AI power that only big real-estate firms can afford today to mid-sized and smaller developers.
+    
+    Your goal is to get a meeting with 
+      {name} (a {role} at {company}{location_context}). You also know the following about them:
+    - Contact: {contact_info}
+{education_section}    - Topic: {topic} / {subtopic}
+    - Research insights: {research}{additional_info_section}
+
+    
+     Make it personal and show that you have done your homework. Be warm and concise, with a touch of humour and persuasion. Do not make any generic statements, such as 'Your role as a {role} at {company} is important to us', or 'I hope this email finds you well'.
+     Don't be overly salesy or sycophantic. Do not use em-dashes, or '-'. 
+     
+     Some things that we can do is automate some of their repetitive tasks. 
+     Lastly, make sure the signature is the followings:
+    
+     Kush Bhuwalka
+     Sr. Engineer, DevelopIQ
+     kush@developiq.com
+     812.229.8157
+     DevelopIQ
+     www.developiq.com
+     """
+
+def get_email_prompt(profile, custom_prompt=None):
+    """Return the prompt template for generating a personalized cold‐outreach email.
+    
+    Args:
+        profile: Dictionary containing profile data
+        custom_prompt: Optional custom prompt template with placeholders
+    """
     # Get any additional fields
     additional_fields = format_additional_fields(profile)
     additional_info_section = ""
@@ -160,7 +190,28 @@ def get_email_prompt(profile):
     education_info = profile.get('education', '')
     education_section = f"    - Education: {education_info}\n" if education_info else ""
     
-    return f""" You are a top-tier growth representative writing a cold outreach email from a boutique AI consulting firm made up of three top-tier AI engineers. Our mission: bring the same AI power that only big real-estate firms can afford today to mid-sized and smaller developers.
+    # Use custom prompt if provided, otherwise use default
+    if custom_prompt:
+        # Replace placeholders in the custom prompt
+        try:
+            return custom_prompt.format(
+                name=profile['name'],
+                role=profile['role'],
+                company=profile['company'],
+                location_context=location_context,
+                contact_info=contact_info,
+                education_section=education_section,
+                topic=profile.get('topic', 'Not specified'),
+                subtopic=profile.get('subtopic', 'Not specified'),
+                research=profile['research'],
+                additional_info_section=additional_info_section
+            )
+        except KeyError as e:
+            # If custom prompt is missing required placeholders, fall back to default
+            raise ValueError(f"Custom prompt is missing required placeholder: {e}")
+    else:
+        # Use default prompt (keep existing logic)
+        return f""" You are a top-tier growth representative writing a cold outreach email from a boutique AI consulting firm made up of three top-tier AI engineers. Our mission: bring the same AI power that only big real-estate firms can afford today to mid-sized and smaller developers.
     
     Your goal is to get a meeting with 
       {profile['name']} (a {profile['role']} at {profile['company']}{location_context}). You also know the following about them:
@@ -173,26 +224,14 @@ def get_email_prompt(profile):
      Don't be overly salesy or sycophantic. Do not use em-dashes, or '-'. 
      
      Some things that we can do is automate some of their repetitive tasks. 
-     Lastly, sign off as Kush Bhuwalka from DevelopIQ. Phone number is 812.229.8157 and position is CEO.
-    """
-
-example = """Subject: Bringing Big-League AI to Austin's Real Estate Scene
-
-Hi Kyle,
-
-I came across your work with HGA Holdings and couldn't help but admire how you've steered the company through Austin's dynamic real estate market. Having a background in Urban & Regional Development myself, I appreciate the unique challenges you face balancing growth, regulations, and the ever-shifting market.
-
-At DevelopIQ, we're a boutique AI consulting firm made up of three engineers who've built AI tools typically reserved for the big players. Our mission is to bring that same AI power to mid-sized developers and owners like you. Imagine automating some of those repetitive tasks that eat up your team's time, or getting sharper market insights without wading through endless data.
-
-I'd love to set up a quick call to explore how we might help HGA Holdings work smarter, not harder. Would you be open to a 20-minute chat next week?
-
-Looking forward to hearing your thoughts.
-
-Best,  
-Kush Bhuwalka  
-CEO, DevelopIQ  
-812.229.8157
-
-"""
+     Lastly, make sure the signature is the followings:
+    
+     Kush Bhuwalka
+     Sr. Engineer, DevelopIQ
+     kush@developiq.com
+     812.229.8157
+     DevelopIQ
+     www.developiq.com
+     """
 
 
