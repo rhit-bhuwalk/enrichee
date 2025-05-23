@@ -95,13 +95,11 @@ class StreamlitApp:
         
         # Debug information (can be removed later)
         with st.expander("🔧 Debug Info (for troubleshooting)", expanded=False):
-            import os
-            st.write("**Environment Detection:**")
             web_indicators = {
                 'STREAMLIT_SHARING_MODE': 'STREAMLIT_SHARING_MODE' in os.environ,
                 'STREAMLIT_CLOUD': 'STREAMLIT_CLOUD' in os.environ,
                 'DYNO (Heroku)': 'DYNO' in os.environ,
-                'Has secrets': hasattr(st, 'secrets') and 'google_oauth' in st.secrets,
+                'Has secrets': self._has_secrets_safely(),
                 'No DISPLAY': os.environ.get('DISPLAY') is None,
                 'No BROWSER': os.environ.get('BROWSER') is None,
                 'No credentials.json': not os.path.exists("credentials.json"),
@@ -880,6 +878,13 @@ class StreamlitApp:
             )
         else:
             st.info("No recent drafts found")
+    
+    def _has_secrets_safely(self) -> bool:
+        """Safely check if Google OAuth secrets exist without raising exceptions."""
+        try:
+            return hasattr(st, 'secrets') and 'google_oauth' in st.secrets
+        except Exception:
+            return False
     
     def _force_complete_reauthentication(self):
         """Force complete re-authentication for both Google Sheets and Gmail."""

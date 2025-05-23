@@ -224,14 +224,15 @@ def get_email_prompt(profile, custom_prompt=None):
      Don't be overly salesy or sycophantic. Do not use em-dashes, or '-'. 
      
      Some things that we can do is automate some of their repetitive tasks. 
+     
+     <RULE> The body of the email should be no more than 150 words. </RULE>
      Lastly, make sure the signature is the followings:
     
      Kush Bhuwalka
      Sr. Engineer, DevelopIQ
-     kush@developiq.com
      812.229.8157
-     DevelopIQ
      www.developiq.com
+     
      """
 
 
