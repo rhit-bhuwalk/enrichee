@@ -186,7 +186,13 @@ class BaseGoogleService:
         """Handle OAuth flow for web deployment environments."""
         try:
             # Check if we already have an authorization code from URL params
-            auth_code = st.query_params.get("code")
+            # st.query_params returns lists for each key (e.g., {"code": ["xyz"]})
+            # Handle both list and string for compatibility across Streamlit versions
+            auth_code_param = st.query_params.get("code")
+            if isinstance(auth_code_param, list):
+                auth_code = auth_code_param[0] if auth_code_param else None
+            else:
+                auth_code = auth_code_param
             
             if auth_code:
                 # We have an authorization code, exchange it for tokens
@@ -198,8 +204,15 @@ class BaseGoogleService:
                     st.session_state.google_credentials = json.loads(self._credentials.to_json())
                     self._service = build(self.service_name.lower(), self.api_version, credentials=self._credentials)
                     
-                    # Clear the URL parameters to avoid reprocessing
-                    st.query_params.clear()
+                    # Clear the URL parameters to avoid reprocessing on reload
+                    try:
+                        st.query_params.clear()
+                    except AttributeError:
+                        # Older versions: fall back to setting empty params
+                        try:
+                            st.query_params.update({})
+                        except Exception:
+                            pass
                     
                     st.success("✅ Authentication successful!")
                     st.rerun()
