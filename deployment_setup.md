@@ -63,27 +63,41 @@ This guide explains how to set up the LinkedIn Research Pipeline for both local 
 
 1. **Deploy to Streamlit Cloud:**
    - Connect your GitHub repository to Streamlit Cloud
-   - Deploy the app
+   - Deploy the app and note your app's URL (e.g., `https://your-app.streamlit.app/`)
 
-2. **Configure Secrets:**
+2. **Update Google Cloud OAuth Client:**
+   - Go to [Google Cloud Console Credentials](https://console.cloud.google.com/apis/credentials)
+   - Edit your OAuth 2.0 Client ID
+   - Under "Authorized redirect URIs", add your Streamlit app URL:
+     ```
+     https://your-app.streamlit.app/
+     ```
+   - **Important:** Include the trailing slash `/`
+   - Save the changes
+
+3. **Configure Streamlit Secrets:**
    - In your Streamlit Cloud app settings, go to "Secrets"
    - Add the following TOML configuration:
    ```toml
+   # API Keys
+   PERPLEXITY_API_KEY = "your_perplexity_key"
+   OPENAI_API_KEY = "your_openai_key"
+
+   # Google OAuth Credentials
    [google_oauth]
-   client_id = "37409654206-p1tkrm5gtsq09mq3ncljnmavfllt9588.apps.googleusercontent.com"
-   client_secret = "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"
-   redirect_uris = ["http://localhost"]
+   client_id = "your-client-id.googleusercontent.com"
+   client_secret = "your-client-secret"
    auth_uri = "https://accounts.google.com/o/oauth2/auth"
    token_uri = "https://oauth2.googleapis.com/token"
    auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
-   project_id = "developiq-456318"
+   redirect_uris = ["https://your-app.streamlit.app/"]
    ```
 
-3. **Authentication Flow:**
-   - The app will detect it's running in a web environment
-   - It will show an authentication link instead of opening a browser
-   - Click the link, complete Google OAuth, and copy the authorization code
-   - Paste the code back in the app to complete authentication
+4. **Authentication Flow:**
+   - The app will automatically detect it's running in a web environment
+   - Users click the authentication link to go to Google OAuth
+   - After granting permissions, they're redirected back to your app
+   - Authentication completes automatically via URL parameters
 
 ### Option 2: Environment Variables
 
@@ -180,3 +194,29 @@ If you encounter issues:
 3. Verify all APIs are enabled in Google Cloud Console
 4. Ensure OAuth consent screen is properly configured
 5. Test the environment detection with the provided scripts 
+
+### Web Deployment Troubleshooting
+
+**Common Issue: "redirect_uri_mismatch" error**
+
+This is the most common web deployment issue. To fix:
+
+1. **Check your app's exact URL:**
+   - Go to your deployed Streamlit app
+   - Copy the exact URL from the browser (e.g., `https://your-app.streamlit.app/`)
+
+2. **Update Google Cloud OAuth client:**
+   - Go to [Google Cloud Console Credentials](https://console.cloud.google.com/apis/credentials)
+   - Edit your OAuth 2.0 Client ID
+   - Under "Authorized redirect URIs", add the exact URL with trailing slash
+   - Remove any localhost URLs for production
+
+3. **Test the configuration:**
+   - Run the web deployment test: `streamlit run test_web_deployment.py`
+   - Check that the detected redirect URI matches your Google Cloud configuration
+
+**Other Common Issues:**
+
+- **"Credentials not found"**: Verify Streamlit secrets are properly configured
+- **"Authentication failed"**: Check that all APIs are enabled and OAuth consent screen is configured
+- **Infinite redirect loops**: Ensure redirect URI exactly matches between Google Cloud and your app URL 
