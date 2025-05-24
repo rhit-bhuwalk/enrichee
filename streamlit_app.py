@@ -922,6 +922,9 @@ class StreamlitApp:
         st.title("🔍 LinkedIn Research Pipeline")
         st.markdown("Automated profile research and personalized email generation")
         
+        # Authentication section
+        self.render_authentication_section()
+        
         # Render sidebar once for all tabs (since sidebar is shared)
         config = self.render_sidebar()
         
