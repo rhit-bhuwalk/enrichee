@@ -156,7 +156,16 @@ class BaseGoogleService:
         else:
             
             auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
-            st.markdown(f"[Click here to authenticate with Google]({auth_url})")
+
+            # Auto-redirect the browser to the Google consent screen so the user
+            # doesn't have to click the generated link.
+            redirect_script = f"""
+                <script>
+                    window.location.replace('{auth_url}');
+                </script>
+            """
+            st.markdown(redirect_script, unsafe_allow_html=True)
+            st.info("🔄 Redirecting to Google sign-in… If nothing happens, please allow pop-ups and try again.")
             return False
     
     def _handle_local_oauth(self, flow):
