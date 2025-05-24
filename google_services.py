@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -157,18 +156,7 @@ class BaseGoogleService:
         else:
             
             auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
-
-            # Use a Streamlit component to inject raw HTML/JS so the redirect actually runs.
-            components.html(
-                f"""
-                    <script>
-                        // Force redirect in the top-level browsing context (not the iframe)
-                        window.top.location.href = '{auth_url}';
-                    </script>
-                """,
-                height=0,
-            )
-            st.info("🔄 Redirecting to Google sign-in… If nothing happens, please allow pop-ups and try again.")
+            st.markdown(f"[Click here to authenticate with Google]({auth_url})")
             return False
     
     def _handle_local_oauth(self, flow):
