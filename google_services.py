@@ -38,7 +38,6 @@ def get_google_credentials():
                     }
                 }
             logger.info("Credentials info:")
-            print(credentials_info)
             return credentials_info
     except Exception as e:
         logger.warning(f"Could not load Streamlit secrets: {e}")

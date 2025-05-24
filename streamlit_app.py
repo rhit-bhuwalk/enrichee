@@ -93,13 +93,12 @@ class StreamlitApp:
         st.subheader("🔐 Google Authentication")
         
         if st.session_state.authenticated:
-            # Check both Sheets and Gmail authentication status
             sheets_status = self.sheets_service.authenticate_user()
             gmail_status = self.gmail_service.authenticate_user()
             
             # Both services must be authenticated
             if not sheets_status or not gmail_status:
-                # Force re-authentication if either service fails
+              
                 st.session_state.authenticated = False
                 st.session_state.gmail_authenticated = False
                 st.error("❌ **Authentication Incomplete:** Missing required permissions")
@@ -118,7 +117,6 @@ class StreamlitApp:
                 
                 return False
             
-            # Both services authenticated successfully
             st.session_state.gmail_authenticated = gmail_status
             
             col1, col2 = st.columns(2)
@@ -148,12 +146,10 @@ class StreamlitApp:
                 st.session_state.authenticated = True
                 st.session_state.gmail_authenticated = True
                 st.rerun()
-                return True
             else:
                 st.warning("⚠️ Please authenticate with Google to continue")
-                st.info("📋 **Required Permissions:** Google Sheets (read/write) + Gmail (create drafts)")
                 
-                with st.expander("🛠️ Setup Instructions", expanded=True):
+                with st.expander("🛠️ Setup Instructions", expanded=False):
                     st.write("**Before authenticating, ensure you have:**")
                     st.write("1. **Enabled APIs:** Both Google Sheets API and Gmail API in your Google Cloud Console")
                     st.write("2. **OAuth Consent Screen:** Configured with both Sheets and Gmail scopes")
