@@ -104,14 +104,6 @@ class StreamlitApp:
                 st.error("❌ **Authentication Incomplete:** Missing required permissions")
                 st.warning("🔄 You need permissions for both Google Sheets and Gmail to use this app")
                 
-                with st.expander("🔍 Why do I need both services?", expanded=True):
-                    st.write("**This app requires access to:**")
-                    st.write("✅ **Google Sheets** - To read profile data and save research results")
-                    st.write("✅ **Gmail** - To create email drafts for outreach")
-                    st.write("")
-                    st.write("**If you previously authenticated without Gmail permissions,**")
-                    st.write("you'll need to re-authenticate to grant access to both services.")
-                
                 if st.button("🔑 Re-authenticate with Full Permissions", type="primary"):
                     self._force_complete_reauthentication()
                 
@@ -146,9 +138,7 @@ class StreamlitApp:
                 st.session_state.authenticated = True
                 st.session_state.gmail_authenticated = True
                 st.rerun()
-            else:
-                st.warning("⚠️ Please authenticate with Google to continue")
-                
+            else:                
                 with st.expander("🛠️ Setup Instructions", expanded=False):
                     st.write("**Before authenticating, ensure you have:**")
                     st.write("1. **Enabled APIs:** Both Google Sheets API and Gmail API in your Google Cloud Console")
@@ -165,7 +155,7 @@ class StreamlitApp:
                     st.write("• [Enable Gmail API](https://console.cloud.google.com/apis/library/gmail.googleapis.com)")
                     st.write("• [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent)")
                 
-                if st.button("🔑 Start Authentication", type="primary"):
+                if st.button("🔑 Authenticate", type="primary"):
                     if self._authenticate_both_services():
                         st.session_state.authenticated = True
                         st.session_state.gmail_authenticated = True
