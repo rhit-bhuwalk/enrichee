@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -157,14 +158,15 @@ class BaseGoogleService:
             
             auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
 
-            # Auto-redirect the browser to the Google consent screen so the user
-            # doesn't have to click the generated link.
-            redirect_script = f"""
-                <script>
-                    window.location.replace('{auth_url}');
-                </script>
-            """
-            st.markdown(redirect_script, unsafe_allow_html=True)
+            # Use a Streamlit component to inject raw HTML/JS so the redirect actually runs.
+            components.html(
+                f"""
+                    <script>
+                        window.location.replace('{auth_url}');
+                    </script>
+                """,
+                height=0,
+            )
             st.info("🔄 Redirecting to Google sign-in… If nothing happens, please allow pop-ups and try again.")
             return False
     
