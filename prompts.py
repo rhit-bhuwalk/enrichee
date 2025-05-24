@@ -1,4 +1,3 @@
-
 def format_additional_fields(profile):
     """Format additional fields from the profile that aren't part of the core required fields."""
     # Core required fields that are handled explicitly in the prompts
@@ -130,28 +129,32 @@ def get_research_prompt(profile):
 
 def get_default_email_prompt_template():
     """Return the default email prompt template with placeholders for profile data."""
+    # NOTE: This template is the single source of truth for default email generation.  
+    # Any changes to the default copy should be made only here to keep the UI and
+    # backend generation behaviour perfectly in-sync.
     return """ You are a top-tier growth representative writing a cold outreach email from a boutique AI consulting firm made up of three top-tier AI engineers. Our mission: bring the same AI power that only big real-estate firms can afford today to mid-sized and smaller developers.
-    
+
     Your goal is to get a meeting with 
       {name} (a {role} at {company}{location_context}). You also know the following about them:
     - Contact: {contact_info}
 {education_section}    - Topic: {topic} / {subtopic}
     - Research insights: {research}{additional_info_section}
 
-    
-     Make it personal and show that you have done your homework. Be warm and concise, with a touch of humour and persuasion. Do not make any generic statements, such as 'Your role as a {role} at {company} is important to us', or 'I hope this email finds you well'.
-     Don't be overly salesy or sycophantic. Do not use em-dashes, or '-'. 
-     
-     Some things that we can do is automate some of their repetitive tasks. 
-     Lastly, make sure the signature is the followings:
-    
-     Kush Bhuwalka
-     Sr. Engineer, DevelopIQ
-     kush@developiq.com
-     812.229.8157
-     DevelopIQ
-     www.developiq.com
-     """
+    Make it personal and show that you have done your homework. Be warm and concise, with a touch of humour and persuasion. Do not make any generic statements, such as 'Your role as a {role} at {company} is important to us', or 'I hope this email finds you well'.
+    Don't be overly salesy or sycophantic. Do not use em-dashes, or '-'. 
+
+    Some things that we can do is automate some of their repetitive tasks. 
+
+    <RULE> The body of the email should be no more than 150 words. </RULE>
+
+    Lastly, make sure the signature is the following:
+
+    Kush Bhuwalka
+    Sr. Engineer, DevelopIQ
+    kush@developiq.com
+    812.229.8157
+    www.developiq.com
+    """
 
 def get_email_prompt(profile, custom_prompt=None):
     """Return the prompt template for generating a personalized cold‐outreach email.
@@ -187,7 +190,8 @@ def get_email_prompt(profile, custom_prompt=None):
     education_info = profile.get('education', '')
     education_section = f"    - Education: {education_info}\n" if education_info else ""
     
-    # Use custom prompt if provided, otherwise use default
+    # If a custom template is supplied, format that. Otherwise use our default
+    # template (defined above) so there is only one authoritative copy.
     if custom_prompt:
         # Replace placeholders in the custom prompt
         try:
@@ -207,29 +211,19 @@ def get_email_prompt(profile, custom_prompt=None):
             # If custom prompt is missing required placeholders, fall back to default
             raise ValueError(f"Custom prompt is missing required placeholder: {e}")
     else:
-        # Use default prompt (keep existing logic)
-        return f""" You are a top-tier growth representative writing a cold outreach email from a boutique AI consulting firm made up of three top-tier AI engineers. Our mission: bring the same AI power that only big real-estate firms can afford today to mid-sized and smaller developers.
-    
-    Your goal is to get a meeting with 
-      {profile['name']} (a {profile['role']} at {profile['company']}{location_context}). You also know the following about them:
-    - Contact: {contact_info}
-{education_section}    - Topic: {profile.get('topic', 'Not specified')} / {profile.get('subtopic', 'Not specified')}
-    - Research insights: {profile['research']}{additional_info_section}
-
-    
-     Make it personal and show that you have done your homework. Be warm and concise, with a touch of humour and persuasion. Do not make any generic statements, such as 'Your role as a {profile['role']} at {profile['company']} is important to us', or 'I hope this email finds you well'.
-     Don't be overly salesy or sycophantic. Do not use em-dashes, or '-'. 
-     
-     Some things that we can do is automate some of their repetitive tasks. 
-     
-     <RULE> The body of the email should be no more than 150 words. </RULE>
-     Lastly, make sure the signature is the followings:
-    
-     Kush Bhuwalka
-     Sr. Engineer, DevelopIQ
-     812.229.8157
-     www.developiq.com
-     
-     """
+        # Build prompt from the single default template defined above
+        default_template = get_default_email_prompt_template()
+        return default_template.format(
+            name=profile['name'],
+            role=profile['role'],
+            company=profile['company'],
+            location_context=location_context,
+            contact_info=contact_info,
+            education_section=education_section,
+            topic=profile.get('topic', 'Not specified'),
+            subtopic=profile.get('subtopic', 'Not specified'),
+            research=profile['research'],
+            additional_info_section=additional_info_section
+        )
 
 
