@@ -87,6 +87,8 @@ class StreamlitApp:
             st.session_state.custom_email_prompt = None
         if 'use_custom_prompt' not in st.session_state:
             st.session_state.use_custom_prompt = False
+        if 'oauth_started' not in st.session_state:
+            st.session_state.oauth_started = False
     
     def render_authentication_section(self):
         """Render authentication section."""
@@ -126,6 +128,7 @@ class StreamlitApp:
                     st.session_state.spreadsheets = None
                     st.session_state.selected_spreadsheet = None
                     st.session_state.selected_sheet = None
+                    st.session_state.oauth_started = False
                     if 'google_credentials' in st.session_state:
                         del st.session_state.google_credentials
                     st.rerun()
@@ -155,14 +158,17 @@ class StreamlitApp:
                     st.write("• [Enable Gmail API](https://console.cloud.google.com/apis/library/gmail.googleapis.com)")
                     st.write("• [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent)")
                 
-                if st.button("🔑 Authenticate", type="primary"):
-                    if self._authenticate_both_services():
-                        st.session_state.authenticated = True
-                        st.session_state.gmail_authenticated = True
-                        st.success("✅ Authentication successful for both services!")
-                        st.rerun()
-                    else:
-                        st.error("❌ Authentication failed. Please check your setup and try again.")
+                # If the OAuth flow hasn't been started yet, show the main button.
+                if not st.session_state.oauth_started:
+                    if st.button("🔑 Authenticate with Google", type="primary"):
+                        if self._authenticate_both_services():
+                            st.session_state.authenticated = True
+                            st.session_state.gmail_authenticated = True
+                            st.success("✅ Authentication successful for both services!")
+                            st.rerun()
+                else:
+                    st.info("🔄 Waiting for Google sign-in to complete… If you have just authorised access, this page will refresh automatically.")
+                
                 return False
     
     def render_cost_estimation(self, df: pd.DataFrame, config: Dict):
@@ -859,6 +865,7 @@ class StreamlitApp:
             st.session_state.spreadsheets = None
             st.session_state.selected_spreadsheet = None
             st.session_state.selected_sheet = None
+            st.session_state.oauth_started = False
             if 'google_credentials' in st.session_state:
                 del st.session_state.google_credentials
             
@@ -885,22 +892,28 @@ class StreamlitApp:
     def _authenticate_both_services(self):
         """Authenticate both Google Sheets and Gmail services with proper OAuth flow."""
         try:
-            # Use the updated authentication approach from google_services
+            # Start OAuth flow – this will display a sign-in link on first run and
+            # return True once the user has completed the Google consent screen.
             sheets_auth = self.sheets_service.start_oauth_flow()
-            
-            if sheets_auth:
-                # Gmail uses the same credentials, so we just need to verify it works
-                gmail_auth = self.gmail_service.authenticate_user()
-                
-                if gmail_auth:
-                    st.success("✅ Successfully authenticated both Google Sheets and Gmail!")
-                    return True
-                else:
-                    st.error("❌ Gmail authentication failed.")
-                    return False
-            else:
-                st.error("❌ Google Sheets authentication failed.")
+
+            # If the flow has just been initiated (sheets_auth == False) we don't treat
+            # this as an error – the user still needs to finish the Google sign-in.
+            if not sheets_auth:
+                st.session_state.oauth_started = True
+                st.info("🔗 Follow the Google sign-in link above, complete the consent flow, then return to this page.")
                 return False
+
+            # Once Sheets auth succeeds, verify Gmail access (they share the token).
+            gmail_auth = self.gmail_service.authenticate_user()
+
+            if gmail_auth:
+                st.success("✅ Successfully authenticated Google Sheets & Gmail!")
+                # Reset helper flag – flow is complete.
+                st.session_state.oauth_started = False
+                return True
+
+            st.error("❌ Gmail authentication failed. Please ensure Gmail API is enabled and the required scope is authorised.")
+            return False
                 
         except Exception as e:
             st.error(f"Authentication error: {str(e)}")
