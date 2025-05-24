@@ -162,7 +162,8 @@ class BaseGoogleService:
             components.html(
                 f"""
                     <script>
-                        window.location.replace('{auth_url}');
+                        // Force redirect in the top-level browsing context (not the iframe)
+                        window.top.location.href = '{auth_url}';
                     </script>
                 """,
                 height=0,
