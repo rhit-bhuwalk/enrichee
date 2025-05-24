@@ -1,6 +1,3 @@
-"""
-This file contains prompts used for generating research and personalized emails.
-"""
 
 def format_additional_fields(profile):
     """Format additional fields from the profile that aren't part of the core required fields."""
