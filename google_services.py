@@ -81,7 +81,6 @@ class BaseGoogleService:
                     self._service = build(self.service_name.lower(), self.api_version, credentials=self._credentials)
                     return True
             
-            # Try token file
             if os.path.exists("token.json"):
                 self._credentials = Credentials.from_authorized_user_file("token.json", self.config.scopes)
                 
@@ -177,11 +176,9 @@ class BaseGoogleService:
     
     def _get_redirect_uri(self):
         """Get redirect URI for web deployment."""
-        # Check for Streamlit Cloud
         if 'STREAMLIT_SHARING_MODE' in os.environ or 'STREAMLIT_CLOUD' in os.environ:
             return "https://enrichee.streamlit.app/"
         
-        # Try to get from secrets
         try:
             if hasattr(st, 'secrets') and 'google_oauth' in st.secrets:
                 redirect_uris = st.secrets['google_oauth'].get('redirect_uris', [])

@@ -906,7 +906,7 @@ class StreamlitApp:
                     st.success("✅ Successfully authenticated both Google Sheets and Gmail!")
                     return True
                 else:
-                    st.error("❌ Gmail authentication failed. Please ensure Gmail API is enabled and scopes are correct.")
+                    st.error("❌ Gmail authentication failed.")
                     return False
             else:
                 st.error("❌ Google Sheets authentication failed.")
