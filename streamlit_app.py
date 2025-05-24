@@ -46,10 +46,9 @@ class StreamlitApp:
         
         # Configure page
         st.set_page_config(
-            page_title="LinkedIn Research Pipeline",
+            page_title="Enrichee",
             page_icon="🔍",
-            layout="wide",
-            initial_sidebar_state="expanded"
+            initial_sidebar_state="collapsed"
         )
     
     def _init_session_state(self):
@@ -93,24 +92,6 @@ class StreamlitApp:
         """Render authentication section."""
         st.subheader("🔐 Google Authentication")
         
-        # Debug information (can be removed later)
-        with st.expander("🔧 Debug Info (for troubleshooting)", expanded=False):
-            web_indicators = {
-                'STREAMLIT_SHARING_MODE': 'STREAMLIT_SHARING_MODE' in os.environ,
-                'STREAMLIT_CLOUD': 'STREAMLIT_CLOUD' in os.environ,
-                'DYNO (Heroku)': 'DYNO' in os.environ,
-                'Has secrets': self._has_secrets_safely(),
-                'No DISPLAY': os.environ.get('DISPLAY') is None,
-                'No BROWSER': os.environ.get('BROWSER') is None,
-                'No credentials.json': not os.path.exists("credentials.json"),
-            }
-            for indicator, detected in web_indicators.items():
-                status = "✅" if detected else "❌"
-                st.write(f"{status} {indicator}: {detected}")
-            
-            is_web = any(web_indicators.values())
-            st.write(f"**Detected as:** {'🌐 Web Deployment' if is_web else '💻 Local Development'}")
-        
         if st.session_state.authenticated:
             # Check both Sheets and Gmail authentication status
             sheets_status = self.sheets_service.authenticate_user()
@@ -146,7 +127,6 @@ class StreamlitApp:
             with col2:
                 st.success("✅ Gmail: Authenticated")
             
-            st.success("🎉 **Ready to use!** Both Google Sheets and Gmail are connected")
             
             col1, col2 = st.columns([1, 1])
             with col1:
@@ -161,7 +141,6 @@ class StreamlitApp:
                     st.rerun()
             return True
         else:
-            # Check if we can authenticate automatically with BOTH services
             sheets_auth = self.sheets_service.authenticate_user()
             gmail_auth = self.gmail_service.authenticate_user() if sheets_auth else False
             
@@ -296,7 +275,6 @@ class StreamlitApp:
         # Get list of spreadsheets
         if st.button("🔄 Refresh Spreadsheets"):
             st.session_state.spreadsheets = None
-            # Clear selections since they might not be valid after refresh
             st.session_state.selected_spreadsheet = None
             st.session_state.selected_sheet = None
             st.session_state.current_sheet_key = None

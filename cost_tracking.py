@@ -113,7 +113,6 @@ class CostEstimator:
             
         except Exception as e:
             # Fallback estimation if token counting fails
-            self.config.logger.warning(f"Token counting failed for {task_type}: {e}. Using fallback estimation.")
             base_tokens = 1000 if task_type == "research" else 300
             return {
                 "input_tokens": base_tokens,
