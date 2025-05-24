@@ -154,11 +154,9 @@ class BaseGoogleService:
                 st.error(f"❌ Authentication failed: {e}")
                 return False
         else:
-            # Show auth link
+            
             auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
-            st.warning("🌐 **Authentication Required**")
             st.markdown(f"[Click here to authenticate with Google]({auth_url})")
-            st.info(f"**Redirect URI:** `{redirect_uri}`")
             return False
     
     def _handle_local_oauth(self, flow):
