@@ -146,8 +146,9 @@ class BaseGoogleService:
                 self._service = build(self.service_name.lower(), self.api_version, credentials=self._credentials)
                 
                 st.query_params.clear()
+                # Mark OAuth flow as complete so the UI updates accordingly
+                st.session_state.oauth_started = False
                 st.success("✅ Authentication successful!")
-                st.rerun()
                 return True
                 
             except Exception as e:

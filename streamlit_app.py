@@ -24,6 +24,7 @@ from cost_tracking import CostTracker, CostEstimator
 from google_services import GoogleSheetsService, GmailService
 from ai_service import AIService
 from profile_processor import ProfileProcessor
+from heatmap_3d import render_3d_heatmap_section
 
 
 class StreamlitApp:
@@ -167,7 +168,16 @@ class StreamlitApp:
                             st.success("✅ Authentication successful for both services!")
                             st.rerun()
                 else:
-                    st.info("🔄 Waiting for Google sign-in to complete… If you have just authorised access, this page will refresh automatically.")
+                    # 🚀 Attempt to automatically complete the OAuth flow after the user is redirected
+                    # back from Google. This avoids requiring a second click on the "Authenticate" button.
+                    if self._authenticate_both_services():
+                        st.session_state.authenticated = True
+                        st.session_state.gmail_authenticated = True
+                        st.success("✅ Authentication successful for both services!")
+                        st.rerun()
+                    else:
+                        # Still waiting for user to finish consent screen or token exchange.
+                        st.info("🔄 Waiting for Google sign-in to complete… If you have just authorised access, this page will refresh automatically.")
                 
                 return False
     
@@ -338,11 +348,23 @@ class StreamlitApp:
         
         # Processing parameters (hidden by default)
         with st.sidebar.expander("🔧 Advanced Settings", expanded=False):
-            max_workers = st.slider("Max Workers", 1, 50, 25)
+            max_workers = st.slider("Max Workers", 1, 10, 3)
             research_max_tokens = st.slider("Research Max Tokens", 100, 2000, 800)
             email_max_tokens = st.slider("Email Max Tokens", 100, 1000, 350)
             timeout_seconds = st.slider("Timeout (seconds)", 10, 120, 40)
             profile_limit = st.number_input("Profile Limit (0 = all)", 0, 1000, 0)
+            
+            # OpenAI Rate Limiting Configuration
+            st.write("**⚡ OpenAI Rate Limits**")
+            openai_rpm_limit = st.selectbox(
+                "OpenAI Requests Per Minute", 
+                options=[500, 3000, 5000, 10000],
+                index=0,  # Default to 500 (Tier 1)
+                help="Set based on your OpenAI API tier: Tier 1=500, Tier 2=5000, Tier 3=10000, Tier 4=30000"
+            )
+            
+            # Add rate limiting information
+            st.info("💡 **Rate Limiting:** Max workers reduced to prevent API rate limits. Higher values may cause rate limit errors.")
         
         # Custom Email Prompt section
         with st.sidebar.expander("✉️ Custom Email Prompt", expanded=False):
@@ -450,7 +472,8 @@ class StreamlitApp:
             'research_max_tokens': research_max_tokens,
             'email_max_tokens': email_max_tokens,
             'timeout_seconds': timeout_seconds,
-            'profile_limit': profile_limit if profile_limit > 0 else None
+            'profile_limit': profile_limit if profile_limit > 0 else None,
+            'openai_rpm_limit': openai_rpm_limit  # Add rate limit configuration
         }
         
         # Add sheet selection to config if available
@@ -568,6 +591,10 @@ class StreamlitApp:
             results_container = st.container()
             
             try:
+                # Update rate limiting configuration before processing
+                if 'openai_rpm_limit' in config:
+                    self.ai_service.update_rate_limit(config['openai_rpm_limit'])
+                
                 start_time = time.time()
                 processed_df = self.processor.process_profiles(
                     st.session_state.profiles_df.copy(), 
@@ -597,7 +624,14 @@ class StreamlitApp:
                 error_msg = str(e)
                 
                 # Provide more specific error guidance
-                if "unfinished" in error_msg.lower():
+                if "rate limit" in error_msg.lower() or "429" in error_msg:
+                    st.error("❌ **Rate Limit Error:** You've exceeded the API rate limits.")
+                    st.info("💡 **Solutions:**")
+                    st.info("• **Reduce Max Workers** - Lower concurrent API requests (try 1-3)")
+                    st.info("• **Increase OpenAI Rate Limit** - Check your OpenAI tier in Advanced Settings")
+                    st.info("• **Wait and Retry** - API limits reset over time")
+                    st.info("• **Upgrade OpenAI Tier** - Higher tiers have higher rate limits")
+                elif "unfinished" in error_msg.lower():
                     st.error("❌ **Processing Error:** Some tasks did not complete successfully.")
                     st.info("💡 **Common causes:**")
                     st.info("• **API timeouts** - Try reducing max workers or increasing timeout")
@@ -630,6 +664,7 @@ class StreamlitApp:
                     st.write("**Current configuration:**")
                     config_summary = {
                         "max_workers": config.get('max_workers', 'N/A'),
+                        "openai_rpm_limit": config.get('openai_rpm_limit', 'N/A'),
                         "timeout_seconds": config.get('timeout_seconds', 'N/A'),
                         "research_max_tokens": config.get('research_max_tokens', 'N/A'),
                         "email_max_tokens": config.get('email_max_tokens', 'N/A'),
@@ -932,7 +967,7 @@ class StreamlitApp:
         config = self.render_sidebar()
         
         # Create tabs for different sections
-        tab1, tab2, tab3 = st.tabs(["📊 Research & Processing", "📧 Email Management", "✉️ Gmail Drafts"])
+        tab1, tab2, tab3, tab4 = st.tabs(["📊 Research & Processing", "📧 Email Management", "✉️ Gmail Drafts", "🏔️ 3D Visualization"])
         
         with tab1:
             # Sheet selection section
@@ -955,6 +990,30 @@ class StreamlitApp:
         
         with tab3:
             self.render_gmail_drafts_section()
+        
+        with tab4:
+            # 3D Visualization tab
+            if 'profiles_df' in st.session_state and not st.session_state.profiles_df.empty:
+                render_3d_heatmap_section(st.session_state.profiles_df)
+            else:
+                st.info("⚠️ No profile data loaded. Please load data from the Research & Processing tab first.")
+                st.markdown("### 🏔️ 3D Mountain-like Heatmap Visualization")
+                st.markdown("""
+                This tab provides interactive 3D heatmap visualizations of your LinkedIn profile data.
+                
+                **Available Visualizations:**
+                - **Company vs Role**: Shows the distribution of profiles across companies and roles
+                - **Location Analysis**: Displays metrics arranged in a grid based on location data
+                - **Custom**: Create your own 3D heatmap using any columns from your data
+                
+                **Features:**
+                - 🎨 Multiple color schemes including a custom "mountain" theme
+                - 📊 Interactive 3D surface plots that look like topographical mountains
+                - 🔍 Hover tooltips with detailed information
+                - 📈 Automatic data aggregation and statistical summaries
+                
+                **To get started:** Load profile data in the Research & Processing tab, then return here to visualize your data!
+                """)
 
     def validate_required_columns(self, df: pd.DataFrame) -> tuple[bool, list[str]]:
         """Validate that all required columns exist in the dataframe.

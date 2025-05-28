@@ -149,10 +149,10 @@ def get_default_email_prompt_template():
 
     Lastly, make sure the signature is the following:
 
-    Kush Bhuwalka
+    Evan Brooks
     Sr. Engineer, DevelopIQ
-    kush@developiq.com
-    812.229.8157
+    evan@developiq.com
+    561.789.8905
     www.developiq.com
     """
 
