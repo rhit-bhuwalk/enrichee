@@ -24,7 +24,6 @@ from cost_tracking import CostTracker, CostEstimator
 from google_services import GoogleSheetsService, GmailService
 from ai_service import AIService
 from profile_processor import ProfileProcessor
-from heatmap_3d import render_3d_heatmap_section
 
 
 class StreamlitApp:
@@ -967,7 +966,7 @@ class StreamlitApp:
         config = self.render_sidebar()
         
         # Create tabs for different sections
-        tab1, tab2, tab3, tab4 = st.tabs(["📊 Research & Processing", "📧 Email Management", "✉️ Gmail Drafts", "🏔️ 3D Visualization"])
+        tab1, tab2, tab3 = st.tabs(["📊 Research & Processing", "📧 Email Management", "✉️ Gmail Drafts"])
         
         with tab1:
             # Sheet selection section
@@ -990,30 +989,6 @@ class StreamlitApp:
         
         with tab3:
             self.render_gmail_drafts_section()
-        
-        with tab4:
-            # 3D Visualization tab
-            if 'profiles_df' in st.session_state and not st.session_state.profiles_df.empty:
-                render_3d_heatmap_section(st.session_state.profiles_df)
-            else:
-                st.info("⚠️ No profile data loaded. Please load data from the Research & Processing tab first.")
-                st.markdown("### 🏔️ 3D Mountain-like Heatmap Visualization")
-                st.markdown("""
-                This tab provides interactive 3D heatmap visualizations of your LinkedIn profile data.
-                
-                **Available Visualizations:**
-                - **Company vs Role**: Shows the distribution of profiles across companies and roles
-                - **Location Analysis**: Displays metrics arranged in a grid based on location data
-                - **Custom**: Create your own 3D heatmap using any columns from your data
-                
-                **Features:**
-                - 🎨 Multiple color schemes including a custom "mountain" theme
-                - 📊 Interactive 3D surface plots that look like topographical mountains
-                - 🔍 Hover tooltips with detailed information
-                - 📈 Automatic data aggregation and statistical summaries
-                
-                **To get started:** Load profile data in the Research & Processing tab, then return here to visualize your data!
-                """)
 
     def validate_required_columns(self, df: pd.DataFrame) -> tuple[bool, list[str]]:
         """Validate that all required columns exist in the dataframe.
